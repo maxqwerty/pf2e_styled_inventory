@@ -1,7 +1,6 @@
 const htmlStyles = `
     <style>
         .inventory {
-            z-index: 1;
             display: block;
             margin: 0;
             padding: 0;
@@ -44,6 +43,7 @@ const htmlStyles = `
         }
 
         .inventory-item-tooltip {
+            z-index: 1;
             pointer-events:none;
             visibility: hidden;
             position: absolute;
