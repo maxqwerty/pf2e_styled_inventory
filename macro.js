@@ -1,6 +1,7 @@
 const htmlStyles = `
     <style>
         .inventory {
+            z-index: 1;
             display: block;
             margin: 0;
             padding: 0;
@@ -41,24 +42,8 @@ const htmlStyles = `
         .invitem-unique {
             border: 4px ridge rgb(84, 22, 110);
         }
-        
-        .invitem-common .tooltiptext {
-            background: linear-gradient(rgba(25, 24, 19, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(25, 24, 19, 0.9));
-        }
-        
-        .invitem-uncommon .tooltiptext {
-            background: linear-gradient(rgba(152, 81, 61, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(152, 81, 61, 0.9));
-        }
-        
-        .invitem-rare .tooltiptext {
-            background: linear-gradient(rgba(0, 38, 100, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 38, 100, 0.9));
-        }
-        
-        .invitem-unique .tooltiptext {
-            background: linear-gradient(rgba(84, 22, 110, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(84, 22, 110, 0.9));
-        }
 
-        .tooltiptext {
+        .inventory-item-tooltip {
             pointer-events:none;
             visibility: hidden;
             position: absolute;
@@ -95,26 +80,44 @@ const htmlStyles = `
             box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 20px 0px;
         }
 
-        .invitem:hover .tooltiptext {
+        .invitem:hover .inventory-item-tooltip {
             visibility: visible;
         }
         
-        .tooltiptext .item-img {
-            position: absolute;
-            display: block;
-            width: auto;
-            height: auto;
-            max-width: 125px;
-            max-height: 125px;
-            min-width: 125px;
-            min-height: 125px;
-            margin-top: 0;
-            right: 0;
-            top: 0;
-            mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,1), rgba(0,0,0,0));
+        .invitem-common .inventory-item-tooltip {
+            background: linear-gradient(rgba(25, 24, 19, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(25, 24, 19, 0.9));
         }
         
-        .tooltiptext .item-name {
+        .invitem-uncommon .inventory-item-tooltip {
+            background: linear-gradient(rgba(152, 81, 61, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(152, 81, 61, 0.9));
+        }
+        
+        .invitem-rare .inventory-item-tooltip {
+            background: linear-gradient(rgba(0, 38, 100, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 38, 100, 0.9));
+        }
+        
+        .invitem-unique .inventory-item-tooltip {
+            background: linear-gradient(rgba(84, 22, 110, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(84, 22, 110, 0.9));
+        }
+        
+        .inventory-item-tooltip .item-img {
+            display: block;
+            width: 125px;
+            height: 125px;
+            float: right;
+            margin-top: -6px;
+            margin-right: -6px;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,1), rgba(0,0,0,0));
+            mask-mode: alpha;
+            box-shadow: 0 30px 40px 40px rgba(0,0,0,.1);
+            border: none;
+        }
+
+        .inventory-item-tooltip .item-stats {
+            min-height: 125px;
+        }
+        
+        .inventory-item-tooltip .item-name {
             font-weight: bold;
             font-size: 20px;
         }
@@ -152,12 +155,14 @@ function renderItem(item) {
 }
 
 const htmlItemTooltip = `
-    <aside class="tooltiptext">
+    <aside class="inventory-item-tooltip">
         <img class="item-img" src="{{item.img}}" />  
-        <div class="item-name">{{item.name}}</div>
-        {{potency_rune_text}}
-        {{striking_rune_text}}
-        {{weapon_damage_text}}
+        <div class="item-stats">
+            <div class="item-name">{{item.name}}{{quantity}}</div>
+            {{potency_rune_text}}
+            {{striking_rune_text}}
+            {{weapon_damage_text}}
+        </div>
         <div class="item-description">{{item.system.description.value}}</div>
     </aside>
 `;
@@ -166,11 +171,21 @@ function renderItemTooltip(item) {
     let html = htmlItemTooltip
     .replaceAll("{{item.img}}", item.img)
     .replaceAll("{{item.name}}", item.name)
+    .replaceAll("{{quantity}}", getItemQuantity(item))
     .replaceAll("{{potency_rune_text}}", getPotencyRuneText(item))
     .replaceAll("{{striking_rune_text}}", getStrikingRuneText(item))
     .replaceAll("{{weapon_damage_text}}", getWeaponDamageText(item))
     .replaceAll("{{item.system.description.value}}", item.system.description.value)
     return html
+}
+
+function getItemQuantity(item) {
+    if (item.system.quantity) {
+        if (["consumable","treasure"].includes(item.type) || item.system.quantity > 1) {
+           return " (" + item.system.quantity + ")"
+        }
+    }
+    return ""
 }
 
 function getPotencyRuneText(item) {
