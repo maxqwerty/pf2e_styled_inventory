@@ -34,6 +34,83 @@ const htmlStyles = `
         .invitem-unique {
             border: 4px ridge rgb(84, 22, 110);
         }
+        
+        .invitem-common .tooltiptext {
+            background: linear-gradient(rgba(25, 24, 19, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(25, 24, 19, 0.9));
+        }
+        
+        .invitem-uncommon .tooltiptext {
+            background: linear-gradient(rgba(152, 81, 61, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(152, 81, 61, 0.9));
+        }
+        
+        .invitem-rare .tooltiptext {
+            background: linear-gradient(rgba(0, 38, 100, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 38, 100, 0.9));
+        }
+        
+        .invitem-unique .tooltiptext {
+            background: linear-gradient(rgba(84, 22, 110, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(84, 22, 110, 0.9));
+        }
+
+        .tooltiptext {
+            pointer-events:none;
+            visibility: hidden;
+            position: absolute;
+            min-width: 400px;
+            max-width: 400px;
+            min-height: 150px;
+            color: rgb(240, 240, 224);
+            background-attachment: scroll;
+            background-clip: border-box;
+            background-color: rgba(0, 0, 0, 0.9);
+            background-image: none;
+            background-origin: padding-box;
+            background-position-x: 0%;
+            background-position-y: 0%;
+            background-repeat: repeat;
+            background-size: auto;
+            border-bottom-color: rgb(35, 34, 29);
+            border-bottom-style: solid;
+            border-bottom-width: 9px;
+            border-image-outset: 0;
+            border-image-repeat: repeat;
+            border-image-slice: 9;
+            border-image-source: url(systems/pf2e/assets/sheet/corner-box.webp);
+            border-image-width: 1;
+            border-left-color: rgb(35, 34, 29);
+            border-left-style: solid;
+            border-left-width: 9px;
+            border-right-color: rgb(35, 34, 29);
+            border-right-style: solid;
+            border-right-width: 9px;
+            border-top-color: rgb(35, 34, 29);
+            border-top-style: solid;
+            border-top-width: 9px;
+            box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 20px 0px;
+        }
+
+        .invitem:hover .tooltiptext {
+            visibility: visible;
+        }
+        
+        .tooltiptext .item-img {
+            position: absolute;
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: 125px;
+            max-height: 125px;
+            min-width: 125px;
+            min-height: 125px;
+            margin-top: 0;
+            right: 0;
+            top: 0;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,1), rgba(0,0,0,0));
+        }
+        
+        .tooltiptext .item-name {
+            font-weight: bold;
+            font-size: 20px;
+        }
     </style>
 `;
 
@@ -49,17 +126,87 @@ function renderInventory(items) {
         html += renderItem(item)
     }
 
-    return htmlInventory.replace("{{items}}", html)
+    return htmlInventory.replaceAll("{{items}}", html)
 }
 
 const htmlItem = `
-    <div class="invitem {{rarity_style}}"><img src="{{item.img}}"</img></div>
+    <div class="invitem {{rarity_style}}">
+        <img src="{{item.img}}" />
+        {{item_tooltip}}
+    </div>
 `;
 
 function renderItem(item) {
-    let html = htmlItem.replace("{{item.img}}", item.img)
-    return html.replace("{{rarity_style}}", "invitem-" + item.system.traits.rarity)
+    let html = htmlItem.replaceAll("{{item.img}}", item.img)
+    html = html.replaceAll("{{rarity_style}}", "invitem-" + item.system.traits.rarity)
+    html = html.replaceAll("{{item.name}}", item.name)
+    html = html.replaceAll("{{item_tooltip}}", renderItemTooltip(item))
+    return html
 }
+
+const htmlItemTooltip = `
+    <aside class="tooltiptext">
+        <img class="item-img" src="{{item.img}}" />  
+        <div class="item-name">{{item.name}}</div>
+        {{potency_rune_text}}
+        {{striking_rune_text}}
+        {{weapon_damage_text}}
+        <div class="item-description">{{item.system.description.value}}</div>
+    </aside>
+`;
+
+function renderItemTooltip(item) {
+    let html = htmlItemTooltip
+    .replaceAll("{{item.img}}", item.img)
+    .replaceAll("{{item.name}}", item.name)
+    .replaceAll("{{potency_rune_text}}", getPotencyRuneText(item))
+    .replaceAll("{{striking_rune_text}}", getStrikingRuneText(item))
+    .replaceAll("{{weapon_damage_text}}", getWeaponDamageText(item))
+    .replaceAll("{{item.system.description.value}}", item.system.description.value)
+    return html
+}
+
+function getPotencyRuneText(item) {
+    if (item.type != "weapon") {
+        return ""
+    }
+    if (item.system.runes.potency > 0) {
+        return '<div class="tooltip-item-weapon-potency-rune-text">' + "+" + item.system.runes.potency + '</div>'
+    }
+    return ""
+}
+
+function getStrikingRuneText(item) {
+    if (item.type != "weapon") {
+        return ""
+    }
+    if (item.system.runes.striking == 0) {
+        return ""
+    }
+
+    switch (item.system.runes.striking) {
+        case 1:
+            return '<div class="tooltip-item-weapon-striking-rune-text">Разящая</div>'
+        case 2:
+            return '<div class="tooltip-item-weapon-striking-rune-text">Сильно Разящая</div>'
+        case 3:
+            return '<div class="tooltip-item-weapon-striking-rune-text">Отлично Разящая</div>'
+        default:
+            return "";
+    }
+}
+
+function getWeaponDamageText(item) {
+    if (item.type != "weapon") {
+        return ""
+    }
+    return "<div class=\"tooltip-item-weapon-damage-text\">" + item.system.damage.dice + item.system.damage.die + " " + item.system.damage.damageType + "</div>"
+}
+
+function renderInventoryDialog(items) {
+    return htmlStyles + renderInventory(items);
+}
+
 
 const targetItemTypes = [
     "equipment",
@@ -70,27 +217,15 @@ const targetItemTypes = [
     "backpack"
 ];
 
-function checkIfCoin(item) {
-    return item.system.stackGroup == "coins"
-}
-
-function checkIfInBagPack(item) {
-    return item.system.containerId != null
-}
-
-function renderInventoryDialog(items) {
-    return htmlStyles + renderInventory(items);
-}
-
 function main() {
-let inventoryItems = token.actor.items.filter(item => targetItemTypes.includes(item.type))
-new Dialog({
-    title: "Инвентарь",
-    content: renderInventoryDialog(inventoryItems),
-    buttons: {}
-  },
-  {resizable: true}
-).render(true);
+    let inventoryItems = token.actor.items.filter(item => targetItemTypes.includes(item.type))
+    new Dialog({
+        title: "Инвентарь",
+        content: renderInventoryDialog(inventoryItems),
+        buttons: {}
+    },
+    {resizable: true}
+    ).render(true);
 }
 
 main();
