@@ -18,6 +18,13 @@ const htmlStyles = `
             overflow: hidden;
             border: 4px ridge rgba(0, 255, 255, 0.6);
         }
+
+        .invitem .item-icon {
+            width: 50px;
+            max-width: 50px;
+            height: 50px;
+            max-height: 50px;
+        }
         
         .invitem-common {
             border: 4px ridge rgb(25, 24, 19);
@@ -131,7 +138,7 @@ function renderInventory(items) {
 
 const htmlItem = `
     <div class="invitem {{rarity_style}}">
-        <img src="{{item.img}}" />
+        <img class="item-icon" src="{{item.img}}" />
         {{item_tooltip}}
     </div>
 `;
